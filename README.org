@@ -1,0 +1,57 @@
+#+title: vsmugge — attach the mugge chat inside VS Code
+
+A thin attach frontend for the always-on mugge chat client, the VS Code
+sibling of [[https://github.com/gako358/mugge.el][mugge.el]]. The client runs as a systemd user service wrapped in
+=dtach -N=, exposing a control socket at =$XDG_RUNTIME_DIR/mugge.sock=. The
+*Mugge: Attach* command runs =dtach -a= against that socket inside a VS Code
+integrated terminal, so the live raw-mode TUI (colours, online panel, typing
+indicator, tab completion, bracketed paste) renders in the editor.
+
+All protocol work — auth, reconnect, notifications — stays in the service.
+The extension is not a second client. Disposing the terminal (or the detach
+key =Ctrl-\=, or *Mugge: Detach*) only tears down the local attach; the
+service stays connected.
+
+* Commands
+
+| Command                | Action                                             |
+|------------------------+----------------------------------------------------|
+| =Mugge: Attach=        | Attach (offers to start the service if needed)     |
+| =Mugge: Detach=        | Dispose the local attach terminal                  |
+| =Mugge: Service Status= | Show =systemctl --user status mugge-chat=          |
+| =Mugge: Start Service= | =systemctl --user start mugge-chat=                |
+| =Mugge: Stop Service=  | =systemctl --user stop mugge-chat= (prompts first) |
+
+* Settings
+
+| Setting             | Default      | Meaning                                     |
+|---------------------+--------------+---------------------------------------------|
+| =mugge.socketPath=  | =""=         | Empty derives =$XDG_RUNTIME_DIR/mugge.sock= |
+| =mugge.dtachProgram= | ="dtach"=    | dtach binary name or path                   |
+| =mugge.serviceUnit= | ="mugge-chat"= | systemd user unit name                    |
+| =mugge.startTimeout= | =10=        | Seconds to wait for the socket after start  |
+
+* Building
+
+#+begin_src sh
+npm install
+npm run compile
+#+end_src
+
+Or with nix:
+
+#+begin_src sh
+nix build
+#+end_src
+
+The flake package installs into =share/vscode/extensions/gako358.mugge=, so it
+can be listed directly in home-manager's =programs.vscode= extensions:
+
+#+begin_src nix
+programs.vscode.profiles.default.extensions = [
+  inputs.vsmugge.packages.${pkgs.system}.default
+];
+#+end_src
+
+=dtach= must be on the PATH VS Code sees (or set =mugge.dtachProgram= to an
+absolute path).

@@ -1,0 +1,83 @@
+{
+  "name": "mugge",
+  "displayName": "Mugge",
+  "description": "Attach the always-on mugge chat client inside VS Code",
+  "version": "0.1.0",
+  "publisher": "gako358",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gako358/vsmugge"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "chat",
+    "terminal",
+    "dtach"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mugge.attach",
+        "title": "Mugge: Attach"
+      },
+      {
+        "command": "mugge.detach",
+        "title": "Mugge: Detach"
+      },
+      {
+        "command": "mugge.serviceStatus",
+        "title": "Mugge: Service Status"
+      },
+      {
+        "command": "mugge.serviceStart",
+        "title": "Mugge: Start Service"
+      },
+      {
+        "command": "mugge.serviceStop",
+        "title": "Mugge: Stop Service"
+      }
+    ],
+    "configuration": {
+      "title": "Mugge",
+      "properties": {
+        "mugge.socketPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the mugge dtach control socket. Empty derives mugge.sock under $XDG_RUNTIME_DIR."
+        },
+        "mugge.dtachProgram": {
+          "type": "string",
+          "default": "dtach",
+          "description": "Name of, or path to, the dtach program used to attach."
+        },
+        "mugge.serviceUnit": {
+          "type": "string",
+          "default": "mugge-chat",
+          "description": "Name of the systemd user unit running the mugge chat service."
+        },
+        "mugge.startTimeout": {
+          "type": "number",
+          "default": 10,
+          "description": "Seconds to wait for the control socket after starting the service."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0"
+  }
+}

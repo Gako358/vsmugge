@@ -1,0 +1,7 @@
+src/**
+node_modules/**
+tsconfig.json
+flake.nix
+flake.lock
+.gitignore
+**/*.org
