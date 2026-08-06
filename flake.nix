@@ -28,7 +28,7 @@
               runHook preInstall
               dest="$out/share/vscode/extensions/gako358.mugge"
               mkdir -p "$dest"
-              cp -r package.json out LICENSE README.org "$dest/"
+              cp -r package.json out media LICENSE README.org "$dest/"
               runHook postInstall
             '';
 

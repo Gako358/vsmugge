@@ -2,6 +2,8 @@ import * as vscode from "vscode";
 import { execFile } from "child_process";
 import { existsSync } from "fs";
 import { join } from "path";
+import { MuggeIpc } from "./ipc";
+import { MuggeChatViewProvider } from "./view";
 
 const TERMINAL_NAME = "mugge";
 // Caret notation for the dtach detach key (Ctrl-\), matching mugge.el.
@@ -142,7 +144,14 @@ function register(command: string, handler: () => void | Promise<void>): vscode.
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  const ipc = new MuggeIpc();
+  const chat = new MuggeChatViewProvider(context.extensionUri, ipc);
+
   context.subscriptions.push(
+    ipc,
+    vscode.window.registerWebviewViewProvider(MuggeChatViewProvider.viewType, chat),
+    register("mugge.chat", () => chat.focus()),
+    register("mugge.reconnect", () => ipc.reconnect()),
     register("mugge.attach", attach),
     register("mugge.detach", detach),
     register("mugge.serviceStatus", serviceStatus),
