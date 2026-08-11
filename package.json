@@ -69,6 +69,14 @@
             {
                 "command": "mugge.serviceStop",
                 "title": "Mugge: Stop Service"
+            },
+            {
+                "command": "mugge.selectMentionSound",
+                "title": "Mugge: Select Mention Sound"
+            },
+            {
+                "command": "mugge.testMentionSound",
+                "title": "Mugge: Test Mention Sound"
             }
         ],
         "configuration": {
