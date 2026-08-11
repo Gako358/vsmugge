@@ -57,6 +57,8 @@
         lastSender = null;
     }
 
+    const imageExts = /\.(png|jpe?g|gif|webp|svg|bmp|ico)(\?[^\s]*)?$/i;
+
     /** Inline markup: links, @mentions, bold, italic, strikethrough, inline code. */
     function withInlineMarkup(text) {
         const fragment = document.createDocumentFragment();
@@ -92,10 +94,24 @@
                 del.textContent = match[5];
                 fragment.append(del);
             } else {
+                const url = match[0];
                 const anchor = document.createElement('a');
-                anchor.href = match[0];
-                anchor.textContent = match[0];
+                anchor.href = url;
+                anchor.textContent = url;
                 fragment.append(anchor);
+                if (imageExts.test(url)) {
+                    const br = document.createElement('br');
+                    fragment.append(br);
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'media-preview';
+                    img.loading = 'lazy';
+                    img.alt = '';
+                    img.addEventListener('click', () => {
+                        img.classList.toggle('media-expanded');
+                    });
+                    fragment.append(img);
+                }
             }
             index = match.index + match[0].length;
         }

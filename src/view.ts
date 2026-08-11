@@ -193,7 +193,7 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"
+      content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}'; img-src https:;"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link href="${uri('chat.css')}" rel="stylesheet" />
