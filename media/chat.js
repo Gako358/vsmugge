@@ -433,6 +433,83 @@
 
     statusEl.addEventListener('click', () => vscode.postMessage({ type: 'reconnect' }));
 
+    // ── Message search ──
+    const searchToggle = document.getElementById('search-toggle');
+    const searchBar = document.getElementById('search-bar');
+    const searchInput = /** @type {HTMLInputElement} */ (document.getElementById('search-input'));
+    const searchCount = document.getElementById('search-count');
+    const searchPrev = document.getElementById('search-prev');
+    const searchNext = document.getElementById('search-next');
+    const searchClose = document.getElementById('search-close');
+    let searchMatches = [];
+    let searchIdx = -1;
+
+    function clearSearchHighlights() {
+        for (const el of logEl.querySelectorAll('.search-hit')) {
+            el.classList.remove('search-hit', 'search-current');
+        }
+        searchMatches = [];
+        searchIdx = -1;
+        searchCount.textContent = '';
+    }
+
+    function runSearch() {
+        clearSearchHighlights();
+        const query = searchInput.value.trim().toLowerCase();
+        if (!query) return;
+        const entries = logEl.querySelectorAll('.entry');
+        for (const entry of entries) {
+            const bodyEl = entry.querySelector('.body');
+            if (bodyEl && bodyEl.textContent.toLowerCase().includes(query)) {
+                entry.classList.add('search-hit');
+                searchMatches.push(entry);
+            }
+        }
+        if (searchMatches.length > 0) {
+            searchIdx = searchMatches.length - 1;
+            searchMatches[searchIdx].classList.add('search-current');
+            searchMatches[searchIdx].scrollIntoView({ block: 'center' });
+        }
+        searchCount.textContent = searchMatches.length ? searchIdx + 1 + '/' + searchMatches.length : 'No results';
+    }
+
+    function searchNavigate(delta) {
+        if (!searchMatches.length) return;
+        searchMatches[searchIdx].classList.remove('search-current');
+        searchIdx = (searchIdx + delta + searchMatches.length) % searchMatches.length;
+        searchMatches[searchIdx].classList.add('search-current');
+        searchMatches[searchIdx].scrollIntoView({ block: 'center' });
+        searchCount.textContent = searchIdx + 1 + '/' + searchMatches.length;
+    }
+
+    function openSearch() {
+        searchBar.hidden = false;
+        searchInput.focus();
+    }
+
+    function closeSearch() {
+        searchBar.hidden = true;
+        searchInput.value = '';
+        clearSearchHighlights();
+    }
+
+    searchToggle.addEventListener('click', () => {
+        if (searchBar.hidden) openSearch();
+        else closeSearch();
+    });
+    searchClose.addEventListener('click', closeSearch);
+    searchPrev.addEventListener('click', () => searchNavigate(-1));
+    searchNext.addEventListener('click', () => searchNavigate(1));
+    searchInput.addEventListener('input', runSearch);
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchNavigate(e.shiftKey ? -1 : 1);
+        } else if (e.key === 'Escape') {
+            closeSearch();
+        }
+    });
+
     renderRoster();
     renderStatus();
     vscode.postMessage({ type: 'ready' });
