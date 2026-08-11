@@ -45,6 +45,13 @@
             default = vsmugge;
           };
 
+          devShells.default = pkgs.mkShell {
+            packages = with pkgs; [
+              nodejs
+              typescript
+            ];
+          };
+
           formatter = pkgs.nixfmt;
 
           checks = {
