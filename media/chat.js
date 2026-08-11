@@ -45,20 +45,30 @@
         lastSender = null;
     }
 
-    /** Links are the only markup we trust from chat text. */
-    function withLinks(text) {
+    /** Inline markup: links and @mentions. */
+    function withInlineMarkup(text) {
         const fragment = document.createDocumentFragment();
-        const pattern = /https?:\/\/[^\s"'<>)\]]+/g;
+        const pattern = /https?:\/\/[^\s"'<>)\]]+|@(\w+)/g;
         let index = 0;
         let match;
         while ((match = pattern.exec(text)) !== null) {
             if (match.index > index) {
                 fragment.append(text.slice(index, match.index));
             }
-            const anchor = document.createElement('a');
-            anchor.href = match[0];
-            anchor.textContent = match[0];
-            fragment.append(anchor);
+            if (match[1] !== undefined) {
+                const mention = document.createElement('span');
+                mention.className = 'mention';
+                if (me && match[1].toLowerCase() === me.toLowerCase()) {
+                    mention.classList.add('mention-me');
+                }
+                mention.textContent = match[0];
+                fragment.append(mention);
+            } else {
+                const anchor = document.createElement('a');
+                anchor.href = match[0];
+                anchor.textContent = match[0];
+                fragment.append(anchor);
+            }
             index = match.index + match[0].length;
         }
         if (index < text.length) {
@@ -101,7 +111,7 @@
             pre.textContent = text;
             bodyEl.append(pre);
         } else {
-            bodyEl.append(withLinks(text));
+            bodyEl.append(withInlineMarkup(text));
         }
         el.append(bodyEl);
     }
