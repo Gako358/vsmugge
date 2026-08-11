@@ -288,7 +288,137 @@
         rosterEl.hidden = !rosterEl.hidden;
     });
 
+    // ── Autocomplete ──
+    const completionsEl = document.getElementById('completions');
+    const slashCommands = [
+        { label: '/help', description: 'Show available commands' },
+        { label: '/me', description: 'Action message' },
+        { label: '/nick', description: 'Change nickname' },
+        { label: '/msg', description: 'Send a whisper' },
+        { label: '/quit', description: 'Disconnect' },
+        { label: '/clear', description: 'Clear chat log' },
+    ];
+    let acItems = [];
+    let acSelected = -1;
+    let acPrefix = '';
+    let acTrigger = ''; // '@' or '/'
+
+    function closeAutocomplete() {
+        acItems = [];
+        acSelected = -1;
+        acPrefix = '';
+        acTrigger = '';
+        completionsEl.hidden = true;
+        completionsEl.textContent = '';
+    }
+
+    function renderAutocomplete() {
+        completionsEl.textContent = '';
+        for (let i = 0; i < acItems.length; i++) {
+            const li = document.createElement('li');
+            li.textContent = acItems[i].label;
+            if (acItems[i].description) {
+                const desc = document.createElement('span');
+                desc.className = 'ac-desc';
+                desc.textContent = acItems[i].description;
+                li.append(desc);
+            }
+            if (i === acSelected) {
+                li.classList.add('selected');
+            }
+            li.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                acceptCompletion(i);
+            });
+            completionsEl.append(li);
+        }
+        completionsEl.hidden = acItems.length === 0;
+    }
+
+    function acceptCompletion(idx) {
+        const item = acItems[idx];
+        if (!item) return;
+        const val = composerEl.value;
+        const cursor = composerEl.selectionStart;
+        const before = val.slice(0, cursor);
+        const triggerIdx = before.lastIndexOf(acTrigger);
+        if (triggerIdx === -1) {
+            closeAutocomplete();
+            return;
+        }
+        const replacement = item.label + ' ';
+        const after = val.slice(cursor);
+        composerEl.value = val.slice(0, triggerIdx) + replacement + after;
+        composerEl.selectionStart = composerEl.selectionEnd = triggerIdx + replacement.length;
+        closeAutocomplete();
+        composerEl.focus();
+    }
+
+    function updateAutocomplete() {
+        const val = composerEl.value;
+        const cursor = composerEl.selectionStart;
+        const before = val.slice(0, cursor);
+
+        // Detect @mention trigger
+        const atMatch = before.match(/@(\w*)$/);
+        if (atMatch) {
+            acTrigger = '@';
+            acPrefix = atMatch[1].toLowerCase();
+            acItems = users
+                .filter((u) => u.toLowerCase().startsWith(acPrefix))
+                .slice(0, 8)
+                .map((u) => ({ label: '@' + u, description: '' }));
+            acSelected = acItems.length > 0 ? 0 : -1;
+            renderAutocomplete();
+            return;
+        }
+
+        // Detect /command trigger (only at start of line)
+        const slashMatch = before.match(/^\/(\w*)$/);
+        if (slashMatch) {
+            acTrigger = '/';
+            acPrefix = slashMatch[1].toLowerCase();
+            acItems = slashCommands.filter((c) => c.label.slice(1).toLowerCase().startsWith(acPrefix));
+            acSelected = acItems.length > 0 ? 0 : -1;
+            renderAutocomplete();
+            return;
+        }
+
+        closeAutocomplete();
+    }
+
+    composerEl.addEventListener('input', updateAutocomplete);
+    composerEl.addEventListener('blur', () => {
+        setTimeout(closeAutocomplete, 150);
+    });
+
     composerEl.addEventListener('keydown', (keyEvent) => {
+        if (acItems.length > 0) {
+            if (keyEvent.key === 'ArrowDown') {
+                keyEvent.preventDefault();
+                acSelected = (acSelected + 1) % acItems.length;
+                renderAutocomplete();
+                return;
+            }
+            if (keyEvent.key === 'ArrowUp') {
+                keyEvent.preventDefault();
+                acSelected = (acSelected - 1 + acItems.length) % acItems.length;
+                renderAutocomplete();
+                return;
+            }
+            if (keyEvent.key === 'Tab' || (keyEvent.key === 'Enter' && !keyEvent.shiftKey)) {
+                if (acSelected >= 0) {
+                    keyEvent.preventDefault();
+                    acceptCompletion(acSelected);
+                    return;
+                }
+            }
+            if (keyEvent.key === 'Escape') {
+                keyEvent.preventDefault();
+                closeAutocomplete();
+                return;
+            }
+        }
         if (keyEvent.key === 'Enter' && !keyEvent.shiftKey) {
             keyEvent.preventDefault();
             const text = composerEl.value.trim();
@@ -297,6 +427,7 @@
             }
             vscode.postMessage({ type: 'send', text });
             composerEl.value = '';
+            closeAutocomplete();
         }
     });
 
