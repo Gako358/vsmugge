@@ -45,10 +45,10 @@
         lastSender = null;
     }
 
-    /** Inline markup: links and @mentions. */
+    /** Inline markup: links, @mentions, bold, italic, strikethrough, inline code. */
     function withInlineMarkup(text) {
         const fragment = document.createDocumentFragment();
-        const pattern = /https?:\/\/[^\s"'<>)\]]+|@(\w+)/g;
+        const pattern = /https?:\/\/[^\s"'<>)\]]+|@(\w+)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~/g;
         let index = 0;
         let match;
         while ((match = pattern.exec(text)) !== null) {
@@ -63,6 +63,22 @@
                 }
                 mention.textContent = match[0];
                 fragment.append(mention);
+            } else if (match[2] !== undefined) {
+                const code = document.createElement('code');
+                code.textContent = match[2];
+                fragment.append(code);
+            } else if (match[3] !== undefined) {
+                const bold = document.createElement('strong');
+                bold.textContent = match[3];
+                fragment.append(bold);
+            } else if (match[4] !== undefined) {
+                const em = document.createElement('em');
+                em.textContent = match[4];
+                fragment.append(em);
+            } else if (match[5] !== undefined) {
+                const del = document.createElement('del');
+                del.textContent = match[5];
+                fragment.append(del);
             } else {
                 const anchor = document.createElement('a');
                 anchor.href = match[0];
