@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { spawn } from 'child_process';
 import { MuggeEvent, MuggeIpc } from './ipc';
 
 /** How many chat events are kept for repopulating a webview that was hidden. */
@@ -52,6 +53,9 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
                     break;
                 case 'reconnect':
                     this.ipc.reconnect();
+                    break;
+                case 'mention':
+                    this.playMentionSound();
                     break;
                 default:
                     break;
@@ -122,6 +126,57 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
     private postSettings(): void {
         const mentionSound = vscode.workspace.getConfiguration('mugge').get<string>('mentionSound', 'chime');
         this.post({ type: 'settings', mentionSound });
+    }
+
+    public testMentionSound(): void {
+        this.playMentionSound();
+    }
+
+    private soundPlaying = false;
+    private soundCache = new Map<string, Buffer>();
+
+    private getSoundBuffer(name: string): Buffer {
+        const cached = this.soundCache.get(name);
+        if (cached) {
+            return cached;
+        }
+        const soundMap: Record<string, { freq: number; duration: number }> = {
+            chime: { freq: 1000, duration: 0.15 },
+            ping: { freq: 1400, duration: 0.1 },
+            pop: { freq: 600, duration: 0.08 },
+            bell: { freq: 1047, duration: 0.3 },
+        };
+        const s = soundMap[name] ?? soundMap['chime'];
+        const rate = 44100;
+        const samples = Math.floor(rate * s.duration);
+        const buf = Buffer.alloc(samples * 2);
+        for (let i = 0; i < samples; i++) {
+            const t = i / rate;
+            const envelope = 1 - t / s.duration;
+            const val = Math.sin(2 * Math.PI * s.freq * t) * 0.3 * envelope;
+            buf.writeInt16LE(Math.round(val * 32767), i * 2);
+        }
+        this.soundCache.set(name, buf);
+        return buf;
+    }
+
+    private playMentionSound(): void {
+        const sound = vscode.workspace.getConfiguration('mugge').get<string>('mentionSound', 'chime');
+        if (sound === 'none' || this.soundPlaying) {
+            return;
+        }
+        const pcm = this.getSoundBuffer(sound);
+        this.soundPlaying = true;
+        const proc = spawn('paplay', ['--raw', '--rate=44100', '--channels=1', '--format=s16le'], {
+            stdio: ['pipe', 'ignore', 'ignore'],
+        });
+        proc.stdin.end(pcm);
+        proc.on('close', () => {
+            this.soundPlaying = false;
+        });
+        proc.on('error', () => {
+            this.soundPlaying = false;
+        });
     }
 
     private post(message: unknown): void {

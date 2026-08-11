@@ -16,43 +16,9 @@
     let lastSender = null;
     let mentionSound = 'chime';
 
-    // ── Mention sounds via Web Audio API ──
-    const audioCtx = typeof AudioContext !== 'undefined' ? new AudioContext() : null;
-
-    function playTone(freq, duration, type, ramp) {
-        if (!audioCtx) return;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type || 'sine';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-        if (ramp) gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start(audioCtx.currentTime);
-        osc.stop(audioCtx.currentTime + duration);
-    }
-
-    const sounds = {
-        chime() {
-            playTone(880, 0.12, 'sine');
-            setTimeout(() => playTone(1175, 0.18, 'sine', true), 120);
-        },
-        ping() {
-            playTone(1400, 0.15, 'sine', true);
-        },
-        pop() {
-            playTone(600, 0.08, 'triangle', true);
-        },
-        bell() {
-            playTone(1047, 0.4, 'sine', true);
-        },
-    };
-
     function playMentionSound() {
-        if (mentionSound === 'none' || !sounds[mentionSound]) return;
-        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        sounds[mentionSound]();
+        if (mentionSound === 'none') return;
+        vscode.postMessage({ type: 'mention' });
     }
 
     function textMentionsMe(text) {
@@ -191,7 +157,7 @@
         body(el, text, event.code === true, String(event.lang || ''));
         logEl.append(el);
         lastSender = sender;
-        if (!mine && !event.history && textMentionsMe(text)) {
+        if (!event.history && textMentionsMe(text)) {
             playMentionSound();
         }
         if (stick) {
