@@ -142,6 +142,22 @@ body {
     color: var(--vscode-textLink-foreground);
 }
 
+.media-preview {
+    display: block;
+    max-width: 200px;
+    max-height: 150px;
+    margin-top: 4px;
+    border-radius: 4px;
+    border: 1px solid var(--vscode-panel-border, transparent);
+    cursor: pointer;
+    object-fit: contain;
+}
+
+.media-preview.media-expanded {
+    max-width: 100%;
+    max-height: none;
+}
+
 .entry code {
     padding: 1px 4px;
     border-radius: 3px;
