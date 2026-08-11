@@ -25,6 +25,11 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
     ) {
         this.ipc.onEvent((event) => this.handle(event));
         this.ipc.onStatus((status) => this.post({ type: 'socket', status }));
+        vscode.workspace.onDidChangeConfiguration((e) => {
+            if (e.affectsConfiguration('mugge.mentionSound')) {
+                this.postSettings();
+            }
+        });
     }
 
     resolveWebviewView(view: vscode.WebviewView): void {
@@ -111,6 +116,12 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
             status: this.ipc.status,
             log: this.log,
         });
+        this.postSettings();
+    }
+
+    private postSettings(): void {
+        const mentionSound = vscode.workspace.getConfiguration('mugge').get<string>('mentionSound', 'chime');
+        this.post({ type: 'settings', mentionSound });
     }
 
     private post(message: unknown): void {

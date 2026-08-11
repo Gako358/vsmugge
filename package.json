@@ -1,115 +1,134 @@
 {
-  "name": "mugge",
-  "displayName": "Mugge",
-  "description": "Mugge chat in a VS Code sidebar, driven by the always-on client",
-  "version": "0.1.0",
-  "publisher": "gako358",
-  "license": "GPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/gako358/vsmugge"
-  },
-  "engines": {
-    "vscode": "^1.85.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "keywords": [
-    "chat",
-    "sidebar",
-    "terminal",
-    "dtach"
-  ],
-  "main": "./out/extension.js",
-  "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "mugge",
-          "title": "Mugge",
-          "icon": "media/mugge.svg"
-        }
-      ]
+    "name": "mugge",
+    "displayName": "Mugge",
+    "description": "Mugge chat in a VS Code sidebar, driven by the always-on client",
+    "version": "0.1.0",
+    "publisher": "gako358",
+    "license": "GPL-3.0-or-later",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gako358/vsmugge"
     },
-    "views": {
-      "mugge": [
-        {
-          "type": "webview",
-          "id": "mugge.chat",
-          "name": "Chat"
-        }
-      ]
+    "engines": {
+        "vscode": "^1.85.0"
     },
-    "commands": [
-      {
-        "command": "mugge.chat",
-        "title": "Mugge: Open Chat"
-      },
-      {
-        "command": "mugge.reconnect",
-        "title": "Mugge: Reconnect Chat Socket"
-      },
-      {
-        "command": "mugge.attach",
-        "title": "Mugge: Attach Terminal"
-      },
-      {
-        "command": "mugge.detach",
-        "title": "Mugge: Detach"
-      },
-      {
-        "command": "mugge.serviceStatus",
-        "title": "Mugge: Service Status"
-      },
-      {
-        "command": "mugge.serviceStart",
-        "title": "Mugge: Start Service"
-      },
-      {
-        "command": "mugge.serviceStop",
-        "title": "Mugge: Stop Service"
-      }
+    "categories": [
+        "Other"
     ],
-    "configuration": {
-      "title": "Mugge",
-      "properties": {
-        "mugge.ipcSocketPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the mugge client's companion socket used by the chat sidebar. Empty derives mugge-ipc.sock under $XDG_RUNTIME_DIR."
+    "keywords": [
+        "chat",
+        "sidebar",
+        "terminal",
+        "dtach"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "mugge",
+                    "title": "Mugge",
+                    "icon": "media/mugge.svg"
+                }
+            ]
         },
-        "mugge.socketPath": {
-          "type": "string",
-          "default": "",
-          "description": "Path to the mugge dtach control socket used by the terminal attach. Empty derives mugge.sock under $XDG_RUNTIME_DIR."
+        "views": {
+            "mugge": [
+                {
+                    "type": "webview",
+                    "id": "mugge.chat",
+                    "name": "Chat"
+                }
+            ]
         },
-        "mugge.dtachProgram": {
-          "type": "string",
-          "default": "dtach",
-          "description": "Name of, or path to, the dtach program used to attach."
-        },
-        "mugge.serviceUnit": {
-          "type": "string",
-          "default": "mugge-chat",
-          "description": "Name of the systemd user unit running the mugge chat service."
-        },
-        "mugge.startTimeout": {
-          "type": "number",
-          "default": 10,
-          "description": "Seconds to wait for the control socket after starting the service."
+        "commands": [
+            {
+                "command": "mugge.chat",
+                "title": "Mugge: Open Chat"
+            },
+            {
+                "command": "mugge.reconnect",
+                "title": "Mugge: Reconnect Chat Socket"
+            },
+            {
+                "command": "mugge.attach",
+                "title": "Mugge: Attach Terminal"
+            },
+            {
+                "command": "mugge.detach",
+                "title": "Mugge: Detach"
+            },
+            {
+                "command": "mugge.serviceStatus",
+                "title": "Mugge: Service Status"
+            },
+            {
+                "command": "mugge.serviceStart",
+                "title": "Mugge: Start Service"
+            },
+            {
+                "command": "mugge.serviceStop",
+                "title": "Mugge: Stop Service"
+            }
+        ],
+        "configuration": {
+            "title": "Mugge",
+            "properties": {
+                "mugge.ipcSocketPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the mugge client's companion socket used by the chat sidebar. Empty derives mugge-ipc.sock under $XDG_RUNTIME_DIR."
+                },
+                "mugge.socketPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to the mugge dtach control socket used by the terminal attach. Empty derives mugge.sock under $XDG_RUNTIME_DIR."
+                },
+                "mugge.dtachProgram": {
+                    "type": "string",
+                    "default": "dtach",
+                    "description": "Name of, or path to, the dtach program used to attach."
+                },
+                "mugge.serviceUnit": {
+                    "type": "string",
+                    "default": "mugge-chat",
+                    "description": "Name of the systemd user unit running the mugge chat service."
+                },
+                "mugge.startTimeout": {
+                    "type": "number",
+                    "default": 10,
+                    "description": "Seconds to wait for the control socket after starting the service."
+                },
+                "mugge.mentionSound": {
+                    "type": "string",
+                    "default": "chime",
+                    "enum": [
+                        "none",
+                        "chime",
+                        "ping",
+                        "pop",
+                        "bell"
+                    ],
+                    "enumDescriptions": [
+                        "Muted — no sound on mention",
+                        "A soft two-tone chime",
+                        "A short high-pitched ping",
+                        "A quick pop",
+                        "A classic bell tone"
+                    ],
+                    "description": "Sound to play when someone @mentions you. Set to \"none\" to mute."
+                }
+            }
         }
-      }
+    },
+    "scripts": {
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "vscode:prepublish": "npm run compile"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "@types/vscode": "^1.85.0",
+        "typescript": "^5.4.0"
     }
-  },
-  "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "vscode:prepublish": "npm run compile"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.0",
-    "@types/vscode": "^1.85.0",
-    "typescript": "^5.4.0"
-  }
 }
