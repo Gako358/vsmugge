@@ -196,3 +196,35 @@ footer {
 #composer:disabled {
     opacity: 0.6;
 }
+
+#completions {
+    margin: 0;
+    padding: 4px 0;
+    list-style: none;
+    border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border, transparent));
+    border-radius: 4px;
+    background: var(--vscode-editorSuggestWidget-background, var(--vscode-input-background));
+    max-height: 10em;
+    overflow-y: auto;
+}
+
+#completions li {
+    padding: 3px 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+#completions li.selected,
+#completions li:hover {
+    background: var(
+        --vscode-editorSuggestWidget-selectedBackground,
+        var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.2))
+    );
+}
+
+#completions .ac-desc {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+}
