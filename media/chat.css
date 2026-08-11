@@ -228,3 +228,68 @@ footer {
     color: var(--vscode-descriptionForeground);
     font-size: 0.85em;
 }
+
+#search-toggle {
+    padding: 2px 6px;
+    border: none;
+    border-radius: 4px;
+    color: var(--vscode-foreground);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+#search-toggle:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+#search-bar {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px var(--gap);
+    border-bottom: 1px solid var(--vscode-panel-border, transparent);
+}
+
+#search-input {
+    flex: 1;
+    padding: 3px 6px;
+    color: var(--vscode-input-foreground);
+    background: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border, transparent);
+    border-radius: 3px;
+    font: inherit;
+}
+
+#search-input:focus {
+    outline: 1px solid var(--vscode-focusBorder);
+}
+
+#search-count {
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
+#search-bar button {
+    padding: 2px 6px;
+    border: none;
+    border-radius: 3px;
+    color: var(--vscode-foreground);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+
+#search-bar button:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
+}
+
+.entry.search-hit {
+    background: var(--vscode-editor-findMatchHighlightBackground, rgba(255, 200, 0, 0.2));
+    border-radius: 3px;
+}
+
+.entry.search-current {
+    background: var(--vscode-editor-findMatchBackground, rgba(255, 200, 0, 0.4));
+}

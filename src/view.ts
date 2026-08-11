@@ -137,7 +137,15 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
     <header id="bar">
       <button id="people" type="button" title="Who is online"></button>
       <span id="status"></span>
+      <button id="search-toggle" type="button" title="Search messages">🔍</button>
     </header>
+    <div id="search-bar" hidden>
+      <input id="search-input" type="text" placeholder="Search messages…" />
+      <span id="search-count"></span>
+      <button id="search-prev" type="button" title="Previous match">▲</button>
+      <button id="search-next" type="button" title="Next match">▼</button>
+      <button id="search-close" type="button" title="Close search">✕</button>
+    </div>
     <ul id="roster" hidden></ul>
     <main id="log" tabindex="0"></main>
     <footer>
