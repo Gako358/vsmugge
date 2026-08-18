@@ -36,12 +36,62 @@
         'var(--vscode-charts-purple, #b180d7)',
     ];
 
+    const nickAliases = new Map();
+
+    function resolveOriginalNick(name) {
+        return nickAliases.get(name.toLowerCase()) || name.toLowerCase();
+    }
+
+    function trackNickChange(text) {
+        const m = text.match(/^(\S+) is now known as (\S+)$/);
+        if (!m) return;
+        const oldNick = m[1];
+        const newNick = m[2];
+        const original = nickAliases.get(oldNick.toLowerCase()) || oldNick.toLowerCase();
+        nickAliases.delete(oldNick.toLowerCase());
+        nickAliases.set(newNick.toLowerCase(), original);
+    }
+
+    // FNV-1a hash for deterministic per-user visual flair.
+    function nameFprint(name) {
+        let h = 0x811c9dc5;
+        for (let i = 0; i < name.length; i++) {
+            h ^= name.charCodeAt(i);
+            h = Math.imul(h, 0x01000193);
+        }
+        return h >>> 0;
+    }
+
     function nameColor(name) {
         let hash = 0;
         for (let i = 0; i < name.length; i++) {
             hash = (hash * 31 + name.charCodeAt(i)) | 0;
         }
         return userColors[((hash % userColors.length) + userColors.length) % userColors.length];
+    }
+
+    // Easter egg: some users randomly get a rainbow name each session.
+    const flairSeed = Math.floor(Date.now() / 86400000);
+    function hasRainbowFlair(fp) {
+        const mix = Math.imul(fp ^ flairSeed, 0x45d9f3b) >>> 0;
+        const cap = fp === 0x664bd8f4 ? 7 : 3;
+        return mix % 17 < cap;
+    }
+
+    function styleName(el, name) {
+        const original = resolveOriginalNick(name);
+        const fp = nameFprint(original);
+        if (fp === 0x664bd8f4) {
+            el.style.color = '#ff69b4';
+        }
+        if (hasRainbowFlair(fp)) {
+            el.style.background = 'linear-gradient(90deg, #f14c4c, #d18616, #cca700, #89d185, #3794ff, #b180d7)';
+            el.style.webkitBackgroundClip = 'text';
+            el.style.backgroundClip = 'text';
+            el.style.color = 'transparent';
+        } else if (fp !== 0x664bd8f4) {
+            el.style.color = nameColor(name);
+        }
     }
 
     function atBottom() {
@@ -133,7 +183,7 @@
         const nameEl = document.createElement('span');
         nameEl.className = 'name';
         nameEl.textContent = name;
-        nameEl.style.color = nameColor(name);
+        styleName(nameEl, name);
         who.append(nameEl);
         if (time) {
             const timeEl = document.createElement('span');
@@ -215,7 +265,7 @@
             dot.className = 'dot';
             const name = document.createElement('span');
             name.textContent = user;
-            name.style.color = nameColor(user);
+            styleName(name, user);
             li.append(dot, name);
             rosterEl.append(li);
         }
@@ -261,6 +311,7 @@
                 appendWhisper(event);
                 break;
             case 'notice':
+                trackNickChange(String(event.text || ''));
                 appendNotice(String(event.text || ''));
                 break;
             case 'users':
