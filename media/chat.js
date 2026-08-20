@@ -331,7 +331,7 @@
     function renderStatus() {
         let text = '';
         if (socketStatus !== 'online') {
-            text = 'waiting for the mugge client…';
+            text = 'waiting for the Bugge client…';
         } else if (!connected) {
             text = 'client offline — reconnecting…';
         }

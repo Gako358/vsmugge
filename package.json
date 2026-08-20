@@ -1,7 +1,7 @@
 {
     "name": "mugge",
-    "displayName": "Mugge",
-    "description": "Mugge chat in a VS Code sidebar, driven by the always-on client",
+    "displayName": "Bugge",
+    "description": "Bugge chat in a VS Code sidebar, driven by the always-on client",
     "version": "0.1.0",
     "publisher": "gako358",
     "license": "GPL-3.0-or-later",
@@ -27,7 +27,7 @@
             "activitybar": [
                 {
                     "id": "mugge",
-                    "title": "Mugge",
+                    "title": "Bugge",
                     "icon": "media/mugge.svg"
                 }
             ]
@@ -44,43 +44,43 @@
         "commands": [
             {
                 "command": "mugge.chat",
-                "title": "Mugge: Open Chat"
+                "title": "Bugge: Open Chat"
             },
             {
                 "command": "mugge.reconnect",
-                "title": "Mugge: Reconnect Chat Socket"
+                "title": "Bugge: Reconnect Chat Socket"
             },
             {
                 "command": "mugge.attach",
-                "title": "Mugge: Attach Terminal"
+                "title": "Bugge: Attach Terminal"
             },
             {
                 "command": "mugge.detach",
-                "title": "Mugge: Detach"
+                "title": "Bugge: Detach"
             },
             {
                 "command": "mugge.serviceStatus",
-                "title": "Mugge: Service Status"
+                "title": "Bugge: Service Status"
             },
             {
                 "command": "mugge.serviceStart",
-                "title": "Mugge: Start Service"
+                "title": "Bugge: Start Service"
             },
             {
                 "command": "mugge.serviceStop",
-                "title": "Mugge: Stop Service"
+                "title": "Bugge: Stop Service"
             },
             {
                 "command": "mugge.selectMentionSound",
-                "title": "Mugge: Select Mention Sound"
+                "title": "Bugge: Select Mention Sound"
             },
             {
                 "command": "mugge.testMentionSound",
-                "title": "Mugge: Test Mention Sound"
+                "title": "Bugge: Test Mention Sound"
             }
         ],
         "configuration": {
-            "title": "Mugge",
+            "title": "Bugge",
             "properties": {
                 "mugge.ipcSocketPath": {
                     "type": "string",

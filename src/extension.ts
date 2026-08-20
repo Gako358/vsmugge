@@ -32,7 +32,7 @@ function socketPath(cfg: Config): string {
     }
     const runtimeDir = process.env['XDG_RUNTIME_DIR'];
     if (!runtimeDir) {
-        throw new Error('Mugge: XDG_RUNTIME_DIR is unset; set mugge.socketPath');
+        throw new Error('Bugge: XDG_RUNTIME_DIR is unset; set mugge.socketPath');
     }
     return join(runtimeDir, 'mugge.sock');
 }
@@ -41,7 +41,7 @@ function systemctl(action: string, unit: string): Promise<string> {
     return new Promise((resolve, reject) => {
         execFile('systemctl', ['--user', action, unit], (err, stdout, stderr) => {
             if (err && action !== 'status') {
-                reject(new Error(`Mugge: systemctl --user ${action} ${unit} failed: ${stderr.trim()}`));
+                reject(new Error(`Bugge: systemctl --user ${action} ${unit} failed: ${stderr.trim()}`));
             } else {
                 resolve(stdout);
             }
@@ -58,12 +58,12 @@ async function ensureService(cfg: Config, socket: string): Promise<void> {
         return;
     }
     const answer = await vscode.window.showWarningMessage(
-        `Mugge chat service (${cfg.serviceUnit}) is not running. Start it?`,
+        `Bugge chat service (${cfg.serviceUnit}) is not running. Start it?`,
         { modal: true },
         'Start'
     );
     if (answer !== 'Start') {
-        throw new Error('Mugge: service not running');
+        throw new Error('Bugge: service not running');
     }
     await systemctl('start', cfg.serviceUnit);
     const deadline = Date.now() + cfg.startTimeout * 1000;
@@ -71,7 +71,7 @@ async function ensureService(cfg: Config, socket: string): Promise<void> {
         await sleep(200);
     }
     if (!existsSync(socket)) {
-        throw new Error(`Mugge: timed out waiting for ${socket}`);
+        throw new Error(`Bugge: timed out waiting for ${socket}`);
     }
 }
 
@@ -99,7 +99,7 @@ async function attach(): Promise<void> {
 function detach(): void {
     const terminal = findTerminal();
     if (!terminal) {
-        throw new Error(`Mugge: no ${TERMINAL_NAME} terminal`);
+        throw new Error(`Bugge: no ${TERMINAL_NAME} terminal`);
     }
     terminal.dispose();
 }
@@ -114,13 +114,13 @@ async function serviceStatus(): Promise<void> {
 async function serviceStart(): Promise<void> {
     const cfg = config();
     await systemctl('start', cfg.serviceUnit);
-    vscode.window.showInformationMessage(`Mugge: started ${cfg.serviceUnit}`);
+    vscode.window.showInformationMessage(`Bugge: started ${cfg.serviceUnit}`);
 }
 
 async function serviceStop(): Promise<void> {
     const cfg = config();
     const answer = await vscode.window.showWarningMessage(
-        `Stop the mugge chat service (${cfg.serviceUnit}) and disconnect the chat?`,
+        `Stop the Bugge chat service (${cfg.serviceUnit}) and disconnect the chat?`,
         { modal: true },
         'Stop'
     );
@@ -128,7 +128,7 @@ async function serviceStop(): Promise<void> {
         return;
     }
     await systemctl('stop', cfg.serviceUnit);
-    vscode.window.showInformationMessage(`Mugge: stopped ${cfg.serviceUnit}`);
+    vscode.window.showInformationMessage(`Bugge: stopped ${cfg.serviceUnit}`);
 }
 
 async function selectMentionSound(): Promise<void> {
@@ -155,7 +155,7 @@ async function selectMentionSound(): Promise<void> {
                 // try next target
             }
         }
-        vscode.window.showWarningMessage('Mugge: could not save setting. Set mugge.mentionSound manually.');
+        vscode.window.showWarningMessage('Bugge: could not save setting. Set mugge.mentionSound manually.');
     }
 }
 
