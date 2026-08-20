@@ -10,9 +10,15 @@
     const composerEl = /** @type {HTMLTextAreaElement} */ (document.getElementById('composer'));
 
     let me = '';
+    /**
+     * @type {never[]}
+     */
     let users = [];
     let connected = false;
     let socketStatus = 'connecting';
+    /**
+     * @type {string | null}
+     */
     let lastSender = null;
     let mentionSound = 'chime';
 
@@ -21,6 +27,9 @@
         vscode.postMessage({ type: 'mention' });
     }
 
+    /**
+     * @param {string} text
+     */
     function textMentionsMe(text) {
         if (!me) return false;
         const pattern = new RegExp('@' + me.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
@@ -38,10 +47,16 @@
 
     const nickAliases = new Map();
 
+    /**
+     * @param {string} name
+     */
     function resolveOriginalNick(name) {
         return nickAliases.get(name.toLowerCase()) || name.toLowerCase();
     }
 
+    /**
+     * @param {string} text
+     */
     function trackNickChange(text) {
         const m = text.match(/^(\S+) is now known as (\S+)$/);
         if (!m) return;
@@ -53,6 +68,9 @@
     }
 
     // FNV-1a hash for deterministic per-user visual flair.
+    /**
+     * @param {string} name
+     */
     function nameFprint(name) {
         let h = 0x811c9dc5;
         for (let i = 0; i < name.length; i++) {
@@ -62,6 +80,9 @@
         return h >>> 0;
     }
 
+    /**
+     * @param {string} name
+     */
     function nameColor(name) {
         let hash = 0;
         for (let i = 0; i < name.length; i++) {
@@ -72,12 +93,19 @@
 
     // Easter egg: some users randomly get a rainbow name each session.
     const flairSeed = Math.floor(Date.now() / 86400000);
+    /**
+     * @param {number} fp
+     */
     function hasRainbowFlair(fp) {
         const mix = Math.imul(fp ^ flairSeed, 0x45d9f3b) >>> 0;
         const cap = fp === 0x664bd8f4 ? 7 : 3;
         return mix % 17 < cap;
     }
 
+    /**
+     * @param {HTMLSpanElement} el
+     * @param {any} name
+     */
     function styleName(el, name) {
         const original = resolveOriginalNick(name);
         const fp = nameFprint(original);
@@ -109,7 +137,11 @@
 
     const imageExts = /\.(png|jpe?g|gif|webp|svg|bmp|ico)(\?[^\s]*)?$/i;
 
-    /** Inline markup: links, @mentions, bold, italic, strikethrough, inline code. */
+    /**
+     * Inline markup: links,
+     * @mentions , bold, italic, strikethrough, inline code.
+     * @param {string} text
+     */
     function withInlineMarkup(text) {
         const fragment = document.createDocumentFragment();
         const pattern = /https?:\/\/[^\s"'<>)\]]+|@(\w+)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~/g;
@@ -171,12 +203,21 @@
         return fragment;
     }
 
+    /**
+     * @param {string} kind
+     * @param {string | undefined} [extraClass]
+     */
     function entry(kind, extraClass) {
         const el = document.createElement('div');
         el.className = 'entry ' + kind + (extraClass ? ' ' + extraClass : '');
         return el;
     }
 
+    /**
+     * @param {HTMLDivElement} el
+     * @param {string | null} name
+     * @param {string | null} time
+     */
     function header(el, name, time) {
         const who = document.createElement('div');
         who.className = 'who';
@@ -194,6 +235,12 @@
         el.append(who);
     }
 
+    /**
+     * @param {HTMLDivElement} el
+     * @param {string | null} text
+     * @param {boolean} isCode
+     * @param {string | undefined} lang
+     */
     function body(el, text, isCode, lang) {
         const bodyEl = document.createElement('div');
         bodyEl.className = 'body';
@@ -210,6 +257,9 @@
         el.append(bodyEl);
     }
 
+    /**
+     * @param {{ sender: any; history: any; time: any; text: any; code: boolean; lang: any; }} event
+     */
     function appendMessage(event) {
         const stick = atBottom();
         const sender = String(event.sender || '');
@@ -231,6 +281,9 @@
         }
     }
 
+    /**
+     * @param {{ peer: any; incoming: any; time: any; text: any; }} event
+     */
     function appendWhisper(event) {
         const stick = atBottom();
         const peer = String(event.peer || '');
@@ -245,6 +298,10 @@
         }
     }
 
+    /**
+     * @param {string} text
+     * @param {string | undefined} [kind]
+     */
     function appendNotice(text, kind) {
         const stick = atBottom();
         const el = entry(kind || 'notice');
@@ -283,6 +340,9 @@
         composerEl.disabled = socketStatus !== 'online' || !connected;
     }
 
+    /**
+     * @param {any[]} list
+     */
     function renderTyping(list) {
         if (!list.length) {
             typingEl.textContent = '';
@@ -293,6 +353,9 @@
         }
     }
 
+    /**
+     * @param {{ type: any; me: any; users: never[]; connected: boolean; typing: any; text: any; name: any; status: any; mentionSound: any; }} event
+     */
     function apply(event) {
         switch (event.type) {
             case 'hello':
@@ -384,6 +447,9 @@
         { label: '/quit', description: 'Disconnect' },
         { label: '/clear', description: 'Clear chat log' },
     ];
+    /**
+     * @type {string | any[]}
+     */
     let acItems = [];
     let acSelected = -1;
     let acPrefix = '';
@@ -421,6 +487,9 @@
         completionsEl.hidden = acItems.length === 0;
     }
 
+    /**
+     * @param {number} idx
+     */
     function acceptCompletion(idx) {
         const item = acItems[idx];
         if (!item) return;
@@ -527,6 +596,9 @@
     const searchPrev = document.getElementById('search-prev');
     const searchNext = document.getElementById('search-next');
     const searchClose = document.getElementById('search-close');
+    /**
+     * @type {{ scrollIntoView: (arg0: { block: string; }) => void; }[] | Element[]}
+     */
     let searchMatches = [];
     let searchIdx = -1;
 
@@ -559,6 +631,9 @@
         searchCount.textContent = searchMatches.length ? searchIdx + 1 + '/' + searchMatches.length : 'No results';
     }
 
+    /**
+     * @param {number} delta
+     */
     function searchNavigate(delta) {
         if (!searchMatches.length) return;
         searchMatches[searchIdx].classList.remove('search-current');
