@@ -144,7 +144,7 @@
      */
     function withInlineMarkup(text) {
         const fragment = document.createDocumentFragment();
-        const pattern = /https?:\/\/[^\s"'<>)\]]+|@(\w+)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~/g;
+        const pattern = /https?:\/\/[^\s"'<>)\]]+|@([\w-]+)|`([^`]+)`|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~/g;
         let index = 0;
         let match;
         while ((match = pattern.exec(text)) !== null) {
@@ -533,7 +533,7 @@
         const before = val.slice(0, cursor);
 
         // Detect @mention trigger
-        const atMatch = before.match(/@(\w*)$/);
+        const atMatch = before.match(/@([\w-]*)$/);
         if (atMatch) {
             acTrigger = '@';
             acPrefix = atMatch[1].toLowerCase();
