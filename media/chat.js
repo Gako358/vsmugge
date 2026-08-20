@@ -440,11 +440,29 @@
     // ── Autocomplete ──
     const completionsEl = document.getElementById('completions');
     const slashCommands = [
-        { label: '/help', description: 'Show available commands' },
+        { label: '/help', description: 'Show this help' },
+        { label: '/quit', description: 'Leave the chat (client-side)' },
+        { label: '!list', description: 'List users online (real name behind a nickname)' },
+        { label: '/admins', description: 'List server admins (online/offline)' },
+        { label: '/w', description: '@user <message> – Send a private whisper' },
+        { label: '/r', description: '<message> – Reply to your most recent whisper' },
+        { label: '!ping', description: '@user [count] – Send desktop pings to a user' },
+        { label: '!remind', description: '[@user] HH:MM <text> – Set a same-day reminder' },
+        { label: '!reminders', description: 'List your pending reminders' },
+        { label: '!remind cancel', description: '<id> – Cancel one of your reminders' },
+        { label: '!note', description: '<subject>: <text> – Save a private note' },
+        { label: '!notes', description: 'List your notes (id, time, subject)' },
+        { label: '!note show', description: '<id> – Show one note in full' },
+        { label: '!note delete', description: '<id|all> – Delete a note (or all of them)' },
+        { label: '/sendfile', description: '@user <path> – Offer a file to a user' },
+        { label: '/acceptfile', description: '<id> – Accept an incoming file offer' },
+        { label: '/rejectfile', description: '<id> – Reject an incoming file offer' },
+        { label: '/voice', description: 'Join/leave voice chat' },
+        { label: '/voicetest', description: 'Local mic+speaker self-test' },
+        { label: '/mute', description: 'Toggle your microphone while in voice' },
+        { label: '/nick', description: '<name> – Set your nickname (/nick reset to clear)' },
+        { label: '/status', description: '<text> – Set a status (/status to clear)' },
         { label: '/me', description: 'Action message' },
-        { label: '/nick', description: 'Change nickname' },
-        { label: '/msg', description: 'Send a whisper' },
-        { label: '/quit', description: 'Disconnect' },
         { label: '/clear', description: 'Clear chat log' },
     ];
     /**
@@ -528,12 +546,14 @@
             return;
         }
 
-        // Detect /command trigger (only at start of line)
-        const slashMatch = before.match(/^\/(\w*)$/);
-        if (slashMatch) {
-            acTrigger = '/';
-            acPrefix = slashMatch[1].toLowerCase();
-            acItems = slashCommands.filter((c) => c.label.slice(1).toLowerCase().startsWith(acPrefix));
+        // Detect /command or !command trigger (only at start of line)
+        const cmdMatch = before.match(/^([/!])(\w*)$/);
+        if (cmdMatch) {
+            acTrigger = cmdMatch[1];
+            acPrefix = cmdMatch[2].toLowerCase();
+            acItems = slashCommands.filter(
+                (c) => c.label.startsWith(acTrigger) && c.label.slice(acTrigger.length).toLowerCase().startsWith(acPrefix)
+            );
             acSelected = acItems.length > 0 ? 0 : -1;
             renderAutocomplete();
             return;
