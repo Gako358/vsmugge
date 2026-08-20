@@ -305,6 +305,9 @@
     function appendNotice(text, kind) {
         const stick = atBottom();
         const el = entry(kind || 'notice');
+        if (/has joined/i.test(text)) {
+            el.classList.add('join');
+        }
         body(el, text, false, '');
         logEl.append(el);
         lastSender = null;

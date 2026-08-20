@@ -106,6 +106,7 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
                 if (this.log.length > LOG_LIMIT) {
                     this.log = this.log.slice(-LOG_LIMIT);
                 }
+                this.maybeFlashJoin(String(event.text ?? ''));
                 break;
             default:
                 break;
@@ -126,6 +127,15 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
     private postSettings(): void {
         const mentionSound = vscode.workspace.getConfiguration('mugge').get<string>('mentionSound', 'chime');
         this.post({ type: 'settings', mentionSound });
+    }
+
+    private maybeFlashJoin(text: string): void {
+        const m = text.match(/^(\S+) has joined/i);
+        if (!m) return;
+        vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: `${m[1]} has joined the chat`, cancellable: false },
+            () => new Promise<void>((resolve) => setTimeout(resolve, 3000))
+        );
     }
 
     public testMentionSound(): void {
