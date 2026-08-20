@@ -267,6 +267,10 @@ footer {
     border-bottom: 1px solid var(--vscode-panel-border, transparent);
 }
 
+#search-bar[hidden] {
+    display: none;
+}
+
 #search-input {
     flex: 1;
     padding: 3px 6px;
