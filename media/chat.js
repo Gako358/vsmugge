@@ -269,11 +269,25 @@
         const sender = String(event.sender || '');
         const mine = !!me && sender.toLowerCase() === me.toLowerCase();
         const el = entry('message', (mine ? 'mine ' : '') + (event.history ? 'history' : ''));
-        // Consecutive lines from one sender read as a block, like a chat app.
-        if (sender !== lastSender) {
-            header(el, sender, String(event.time || ''));
-        }
         const text = String(event.text || '');
+        const time = String(event.time || '');
+        const isJoinOrPart = / has joined\b| has left\b/i.test(text);
+        const isServerJoinOrPart = sender.toUpperCase() === 'SERVER' && isJoinOrPart;
+        if (isServerJoinOrPart) {
+            el.classList.add('notice', 'join');
+            body(el, time ? text + ' ' + time : text, false, '');
+            logEl.append(el);
+            lastSender = null;
+            if (stick) {
+                scroll();
+            }
+            return;
+        }
+        const forceHeader = event.history || isJoinOrPart;
+        // Consecutive lines from one sender read as a block, like a chat app.
+        if (sender !== lastSender || forceHeader) {
+            header(el, sender, time);
+        }
         body(el, text, event.code === true, String(event.lang || ''));
         logEl.append(el);
         lastSender = sender;
