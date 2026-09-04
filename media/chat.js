@@ -221,18 +221,22 @@
     function header(el, name, time) {
         const who = document.createElement('div');
         who.className = 'who';
-        const nameEl = document.createElement('span');
-        nameEl.className = 'name';
-        nameEl.textContent = name;
-        styleName(nameEl, name);
-        who.append(nameEl);
+        if (name) {
+            const nameEl = document.createElement('span');
+            nameEl.className = 'name';
+            nameEl.textContent = name;
+            styleName(nameEl, name);
+            who.append(nameEl);
+        }
         if (time) {
             const timeEl = document.createElement('span');
             timeEl.className = 'time';
             timeEl.textContent = time;
             who.append(timeEl);
         }
-        el.append(who);
+        if (name || time) {
+            el.append(who);
+        }
     }
 
     /**
@@ -301,13 +305,15 @@
     /**
      * @param {string} text
      * @param {string | undefined} [kind]
+     * @param {string | null} [time]
      */
-    function appendNotice(text, kind) {
+    function appendNotice(text, kind, time) {
         const stick = atBottom();
         const el = entry(kind || 'notice');
         if (/has joined/i.test(text)) {
             el.classList.add('join');
         }
+        header(el, null, time || null);
         body(el, text, false, '');
         logEl.append(el);
         lastSender = null;
@@ -357,7 +363,7 @@
     }
 
     /**
-     * @param {{ type: any; me: any; users: never[]; connected: boolean; typing: any; text: any; name: any; status: any; mentionSound: any; }} event
+     * @param {{ type: any; me: any; users: never[]; connected: boolean; typing: any; text: any; name: any; time: any; status: any; mentionSound: any; }} event
      */
     function apply(event) {
         switch (event.type) {
@@ -378,7 +384,7 @@
                 break;
             case 'notice':
                 trackNickChange(String(event.text || ''));
-                appendNotice(String(event.text || ''));
+                appendNotice(String(event.text || ''), undefined, String(event.time || ''));
                 break;
             case 'users':
                 users = event.users || [];
@@ -402,7 +408,7 @@
                 renderStatus();
                 break;
             case 'error':
-                appendNotice(String(event.text || ''), 'error');
+                appendNotice(String(event.text || ''), 'error', String(event.time || ''));
                 break;
             case 'settings':
                 mentionSound = String(event.mentionSound || 'chime');
