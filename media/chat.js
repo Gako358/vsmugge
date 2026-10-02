@@ -22,7 +22,7 @@
     let lastSender = null;
     let mentionSound = 'chime';
 
-    const CURATED_EMOJI = ['👍', '❤️', '😂', '🎉', '😮', '😢', '🙏', '🔥'];
+    const CURATED_EMOJI = ['👍', '❤️', '😂', '🎉', '😮', '😢', '🙏', '🔥', '🤡'];
 
     /**
      * @type {Map<number, Record<string, string[]>>}
