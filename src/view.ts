@@ -41,26 +41,38 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
         };
         view.webview.html = this.html(view.webview);
 
-        view.webview.onDidReceiveMessage((message: { type?: string; text?: string }) => {
-            switch (message?.type) {
-                case 'ready':
-                    this.replay();
-                    break;
-                case 'send':
-                    if (!this.ipc.send(String(message.text ?? ''))) {
-                        this.post({ type: 'error', text: 'Not connected to the mugge client.' });
-                    }
-                    break;
-                case 'reconnect':
-                    this.ipc.reconnect();
-                    break;
-                case 'mention':
-                    this.playMentionSound();
-                    break;
-                default:
-                    break;
+        view.webview.onDidReceiveMessage(
+            (message: { type?: string; text?: string; id?: number; emoji?: string }) => {
+                switch (message?.type) {
+                    case 'ready':
+                        this.replay();
+                        break;
+                    case 'send':
+                        if (!this.ipc.send(String(message.text ?? ''))) {
+                            this.post({ type: 'error', text: 'Not connected to the mugge client.' });
+                        }
+                        break;
+                    case 'react':
+                        if (!this.ipc.send(`/react ${message.id} ${message.emoji}`)) {
+                            this.post({ type: 'error', text: 'Not connected to the mugge client.' });
+                        }
+                        break;
+                    case 'unreact':
+                        if (!this.ipc.send(`/unreact ${message.id} ${message.emoji}`)) {
+                            this.post({ type: 'error', text: 'Not connected to the mugge client.' });
+                        }
+                        break;
+                    case 'reconnect':
+                        this.ipc.reconnect();
+                        break;
+                    case 'mention':
+                        this.playMentionSound();
+                        break;
+                    default:
+                        break;
+                }
             }
-        });
+        );
 
         view.onDidDispose(() => {
             if (this.view === view) {
@@ -102,11 +114,15 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
             case 'message':
             case 'whisper':
             case 'notice':
+            case 'reaction':
+            case 'reactions':
                 this.log.push(event);
                 if (this.log.length > LOG_LIMIT) {
                     this.log = this.log.slice(-LOG_LIMIT);
                 }
-                this.maybeFlashJoin(event);
+                if (event.type === 'message' || event.type === 'whisper' || event.type === 'notice') {
+                    this.maybeFlashJoin(event);
+                }
                 break;
             default:
                 break;
