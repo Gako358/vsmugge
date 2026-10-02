@@ -22,6 +22,13 @@
     let lastSender = null;
     let mentionSound = 'chime';
 
+    const CURATED_EMOJI = ['👍', '❤️', '😂', '🎉', '😮', '😢', '🙏', '🔥'];
+
+    /**
+     * @type {Map<number, Record<string, string[]>>}
+     */
+    const reactionState = new Map();
+
     function playMentionSound() {
         if (mentionSound === 'none') return;
         vscode.postMessage({ type: 'mention' });
@@ -133,6 +140,7 @@
     function clearLog() {
         logEl.textContent = '';
         lastSender = null;
+        reactionState.clear();
     }
 
     const imageExts = /\.(png|jpe?g|gif|webp|svg|bmp|ico)(\?[^\s]*)?$/i;
@@ -262,7 +270,7 @@
     }
 
     /**
-     * @param {{ sender: any; history: any; time: any; text: any; code: boolean; lang: any; }} event
+     * @param {{ sender: any; history: any; time: any; text: any; code: boolean; lang: any; id?: any; }} event
      */
     function appendMessage(event) {
         const stick = atBottom();
@@ -283,12 +291,19 @@
             }
             return;
         }
+        const id = Number(event.id || 0);
+        if (id > 0) {
+            el.dataset.msgId = String(id);
+        }
         const forceHeader = event.history || isJoinOrPart;
         // Consecutive lines from one sender read as a block, like a chat app.
         if (sender !== lastSender || forceHeader) {
             header(el, sender, time);
         }
         body(el, text, event.code === true, String(event.lang || ''));
+        if (id > 0) {
+            renderReactions(el, id, reactionState.get(id) || {});
+        }
         logEl.append(el);
         lastSender = sender;
         if (!event.history && textMentionsMe(text)) {
@@ -296,6 +311,116 @@
         }
         if (stick) {
             scroll();
+        }
+    }
+
+    /**
+     * @param {HTMLDivElement} el
+     * @param {number} msgId
+     * @param {Record<string, string[]>} counts
+     */
+    function renderReactions(el, msgId, counts) {
+        let row = /** @type {HTMLDivElement | null} */ (el.querySelector('.reactions'));
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'reactions';
+            el.append(row);
+        }
+        row.textContent = '';
+        for (const emoji of Object.keys(counts)) {
+            const users = counts[emoji];
+            if (!users || !users.length) continue;
+            const mine = !!me && users.some((u) => u.toLowerCase() === me.toLowerCase());
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = 'reaction-pill' + (mine ? ' mine' : '');
+            pill.textContent = emoji + ' ' + users.length;
+            pill.title = users.join(', ');
+            pill.addEventListener('click', () => toggleReaction(msgId, emoji, mine));
+            row.append(pill);
+        }
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'reaction-add';
+        add.textContent = '+';
+        add.title = 'Add reaction';
+        add.addEventListener('click', () => showEmojiMenu(add, msgId));
+        row.append(add);
+    }
+
+    /**
+     * @param {number} msgId
+     * @param {string} emoji
+     * @param {boolean} isMine
+     */
+    function toggleReaction(msgId, emoji, isMine) {
+        vscode.postMessage({ type: isMine ? 'unreact' : 'react', id: msgId, emoji });
+    }
+
+    /**
+     * @param {HTMLElement} anchorEl
+     * @param {number} msgId
+     */
+    function showEmojiMenu(anchorEl, msgId) {
+        for (const stale of document.querySelectorAll('.reaction-menu')) {
+            stale.remove();
+        }
+        const menu = document.createElement('div');
+        menu.className = 'reaction-menu';
+        for (const emoji of CURATED_EMOJI) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.textContent = emoji;
+            btn.addEventListener('click', () => {
+                vscode.postMessage({ type: 'react', id: msgId, emoji });
+                menu.remove();
+            });
+            menu.append(btn);
+        }
+        anchorEl.insertAdjacentElement('afterend', menu);
+        setTimeout(() => {
+            document.addEventListener('click', function onDocClick(e) {
+                if (!menu.contains(/** @type {Node} */ (e.target))) {
+                    menu.remove();
+                    document.removeEventListener('click', onDocClick);
+                }
+            });
+        }, 0);
+    }
+
+    /**
+     * @param {{ id: any; emoji: any; user: any; added: any; }} event
+     */
+    function applyReaction(event) {
+        const id = Number(event.id || 0);
+        if (id <= 0) return;
+        const counts = reactionState.get(id) || {};
+        const users = new Set(counts[event.emoji] || []);
+        const user = String(event.user || '');
+        if (event.added) {
+            users.add(user);
+        } else {
+            users.delete(user);
+        }
+        counts[event.emoji] = Array.from(users);
+        reactionState.set(id, counts);
+        const el = /** @type {HTMLDivElement | null} */ (logEl.querySelector(`[data-msg-id="${id}"]`));
+        if (el) {
+            renderReactions(el, id, counts);
+        }
+    }
+
+    /**
+     * @param {{ id: any; counts: any; }} event
+     */
+    function applyReactionsSnapshot(event) {
+        const id = Number(event.id || 0);
+        if (id <= 0) return;
+        const counts = /** @type {Record<string, string[]>} */ (event.counts || {});
+        reactionState.set(id, counts);
+        const el = /** @type {HTMLDivElement | null} */ (logEl.querySelector(`[data-msg-id="${id}"]`));
+        if (el) {
+            renderReactions(el, id, counts);
         }
     }
 
@@ -399,6 +524,12 @@
             case 'notice':
                 trackNickChange(String(event.text || ''));
                 appendNotice(String(event.text || ''), undefined, String(event.time || ''));
+                break;
+            case 'reaction':
+                applyReaction(event);
+                break;
+            case 'reactions':
+                applyReactionsSnapshot(event);
                 break;
             case 'users':
                 users = event.users || [];
