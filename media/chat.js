@@ -14,6 +14,16 @@
      * @type {never[]}
      */
     let users = [];
+    /** @type {Record<string, string>} */
+    let statuses = {};
+    /** @type {string[]} */
+    let voiceUsers = [];
+    /** @type {string[]} */
+    let typingUsers = [];
+    /** Lower-cased name → time of their latest message, as the server printed it. */
+    const lastSpoke = new Map();
+    /** Lower-cased names that just came online; highlighted briefly in the roster. */
+    const arrivals = new Set();
     let connected = false;
     let socketStatus = 'connecting';
     /**
@@ -295,6 +305,9 @@
         if (id > 0) {
             el.dataset.msgId = String(id);
         }
+        if (sender && time) {
+            lastSpoke.set(sender.toLowerCase(), time);
+        }
         const forceHeader = event.history || isJoinOrPart;
         // Consecutive lines from one sender read as a block, like a chat app.
         if (sender !== lastSender || forceHeader) {
@@ -461,19 +474,159 @@
         }
     }
 
+    /**
+     * @param {string[]} list
+     * @param {string} name
+     */
+    function includesName(list, name) {
+        const lower = name.toLowerCase();
+        return list.some((u) => u.toLowerCase() === lower);
+    }
+
+    /**
+     * Adds text to the composer, keeping any draft, and focuses it. `atStart` turns the draft into
+     * e.g. a whisper; otherwise the text is appended (a mention mid-sentence).
+     * @param {string} text
+     * @param {boolean} atStart
+     */
+    function prefillComposer(text, atStart) {
+        if (composerEl.disabled) return;
+        const draft = composerEl.value;
+        if (atStart) {
+            composerEl.value = text + draft.replace(/^\/w @\S+ /, '');
+        } else {
+            composerEl.value = draft + (draft && !/\s$/.test(draft) ? ' ' : '') + text;
+        }
+        composerEl.focus();
+        composerEl.selectionStart = composerEl.selectionEnd = composerEl.value.length;
+    }
+
+    /**
+     * @param {string} label
+     * @param {string} title
+     * @param {() => void} onClick
+     */
+    function rosterAction(label, title, onClick) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'roster-action';
+        btn.textContent = label;
+        btn.title = title;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onClick();
+        });
+        return btn;
+    }
+
+    /**
+     * Me first, then whoever is in voice, then everyone else alphabetically.
+     * @param {string} a
+     * @param {string} b
+     */
+    function rosterOrder(a, b) {
+        const rank = (/** @type {string} */ u) =>
+            me && u.toLowerCase() === me.toLowerCase() ? 0 : includesName(voiceUsers, u) ? 1 : 2;
+        return rank(a) - rank(b) || a.localeCompare(b, undefined, { sensitivity: 'base' });
+    }
+
     function renderRoster() {
-        peopleEl.textContent = 'Online ' + users.length;
+        const inVoice = users.filter((u) => includesName(voiceUsers, u)).length;
+        peopleEl.textContent = (rosterEl.hidden ? '▸ ' : '▾ ') + 'Online ' + users.length + (inVoice ? ' · 🎙 ' + inVoice : '');
         rosterEl.textContent = '';
-        for (const user of users) {
+        for (const user of [...users].sort(rosterOrder)) {
+            const isMe = !!me && user.toLowerCase() === me.toLowerCase();
             const li = document.createElement('li');
+            li.classList.toggle('me', isMe);
+            li.classList.toggle('arrived', arrivals.has(user.toLowerCase()));
+
             const dot = document.createElement('span');
             dot.className = 'dot';
+            const main = document.createElement('div');
+            main.className = 'roster-main';
+            const line = document.createElement('div');
+            line.className = 'roster-line';
             const name = document.createElement('span');
+            name.className = 'roster-name';
             name.textContent = user;
             styleName(name, user);
-            li.append(dot, name);
+            line.append(name);
+            if (isMe) {
+                const you = document.createElement('span');
+                you.className = 'roster-tag';
+                you.textContent = 'you';
+                line.append(you);
+            }
+            if (includesName(voiceUsers, user)) {
+                const mic = document.createElement('span');
+                mic.className = 'roster-icon';
+                mic.textContent = '🎙';
+                mic.title = 'In voice chat';
+                line.append(mic);
+            }
+            if (includesName(typingUsers, user)) {
+                const typing = document.createElement('span');
+                typing.className = 'roster-typing';
+                typing.textContent = '✎';
+                typing.title = 'Typing…';
+                line.append(typing);
+            }
+            main.append(line);
+            const status = statuses[user];
+            if (status) {
+                const statusEl = document.createElement('div');
+                statusEl.className = 'roster-status';
+                statusEl.textContent = status;
+                statusEl.title = status;
+                main.append(statusEl);
+            }
+            li.append(dot, main);
+
+            const spoke = lastSpoke.get(user.toLowerCase());
+            li.title = spoke ? 'Last message at ' + spoke : 'No messages seen yet';
+            if (!isMe) {
+                li.classList.add('clickable');
+                li.addEventListener('click', () => prefillComposer('@' + user + ' ', false));
+                const actions = document.createElement('span');
+                actions.className = 'roster-actions';
+                actions.append(
+                    rosterAction('✉', 'Whisper to ' + user, () => prefillComposer('/w @' + user + ' ', true)),
+                    rosterAction('🔔', 'Send ' + user + ' a desktop ping', () =>
+                        vscode.postMessage({ type: 'send', text: '!ping @' + user })
+                    )
+                );
+                li.append(actions);
+            }
             rosterEl.append(li);
         }
+    }
+
+    /**
+     * Highlights users who just came online, but not on the initial list after (re)connecting.
+     * @param {string[]} next
+     */
+    function noteArrivals(next) {
+        if (!users.length) return;
+        for (const user of next) {
+            if (!includesName(users, user)) {
+                const key = user.toLowerCase();
+                arrivals.add(key);
+                setTimeout(() => {
+                    arrivals.delete(key);
+                    renderRoster();
+                }, 4000);
+            }
+        }
+    }
+
+    /**
+     * @param {any} snapshot
+     */
+    function loadPresence(snapshot) {
+        users = snapshot.users || [];
+        statuses = snapshot.statuses || {};
+        voiceUsers = snapshot.voice || [];
+        arrivals.clear();
     }
 
     function renderStatus() {
@@ -492,6 +645,8 @@
      * @param {any[]} list
      */
     function renderTyping(list) {
+        typingUsers = list;
+        renderRoster();
         if (!list.length) {
             typingEl.textContent = '';
         } else if (list.length === 1) {
@@ -509,7 +664,7 @@
             case 'hello':
                 clearLog();
                 me = String(event.me || '');
-                users = event.users || [];
+                loadPresence(event);
                 connected = event.connected === true;
                 renderRoster();
                 renderStatus();
@@ -532,7 +687,23 @@
                 applyReactionsSnapshot(event);
                 break;
             case 'users':
+                noteArrivals(event.users || []);
                 users = event.users || [];
+                renderRoster();
+                break;
+            case 'status': {
+                const name = String(event.name || '');
+                const text = String(event.text || '');
+                if (text) {
+                    statuses[name] = text;
+                } else {
+                    delete statuses[name];
+                }
+                renderRoster();
+                break;
+            }
+            case 'voice':
+                voiceUsers = event.users || [];
                 renderRoster();
                 break;
             case 'typing':
@@ -540,6 +711,7 @@
                 break;
             case 'me':
                 me = String(event.name || '');
+                renderRoster();
                 break;
             case 'connection':
                 connected = event.connected === true;
@@ -572,7 +744,7 @@
             clearLog();
             const snapshot = event.snapshot || {};
             me = String(snapshot.me || '');
-            users = snapshot.users || [];
+            loadPresence(snapshot);
             connected = snapshot.connected === true;
             socketStatus = String(event.status || 'offline');
             renderRoster();
@@ -581,14 +753,19 @@
             for (const logged of event.log || []) {
                 apply(logged);
             }
+            renderRoster();
             scroll();
             return;
         }
         apply(event);
     });
 
+    // The roster's open/closed state survives the webview being hidden and restored.
+    rosterEl.hidden = !(vscode.getState() || {}).rosterOpen;
     peopleEl.addEventListener('click', () => {
         rosterEl.hidden = !rosterEl.hidden;
+        vscode.setState({ ...(vscode.getState() || {}), rosterOpen: !rosterEl.hidden });
+        renderRoster();
     });
 
     // ── Autocomplete ──

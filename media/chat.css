@@ -61,18 +61,117 @@ body {
     border-bottom: 1px solid var(--vscode-panel-border, transparent);
 }
 
+#roster {
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
 #roster li {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 1px 0;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+#roster li.clickable {
+    cursor: pointer;
+}
+
+#roster li.clickable:hover {
+    background: var(--vscode-list-hoverBackground, rgba(128, 128, 128, 0.15));
+}
+
+#roster li.arrived {
+    animation: roster-arrive 4s ease-out;
+}
+
+@keyframes roster-arrive {
+    from {
+        background: var(--vscode-editor-findMatchHighlightBackground, rgba(137, 209, 133, 0.35));
+    }
+    to {
+        background: transparent;
+    }
 }
 
 #roster .dot {
+    flex: none;
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: var(--vscode-charts-green, #89d185);
+}
+
+.roster-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.roster-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.roster-name {
+    font-weight: 600;
+}
+
+.roster-tag {
+    padding: 0 4px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    color: var(--vscode-badge-foreground);
+    background: var(--vscode-badge-background);
+}
+
+.roster-icon {
+    font-size: 0.85em;
+}
+
+.roster-typing {
+    color: var(--vscode-descriptionForeground);
+    animation: roster-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes roster-blink {
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.roster-status {
+    overflow: hidden;
+    color: var(--vscode-descriptionForeground);
+    font-size: 0.85em;
+    font-style: italic;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.roster-actions {
+    display: none;
+    gap: 2px;
+}
+
+#roster li:hover .roster-actions,
+#roster li:focus-within .roster-actions {
+    display: flex;
+}
+
+.roster-action {
+    padding: 0 4px;
+    border: none;
+    border-radius: 3px;
+    color: var(--vscode-foreground);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.roster-action:hover {
+    background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.2));
 }
 
 #log {
