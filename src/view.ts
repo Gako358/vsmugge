@@ -9,6 +9,8 @@ interface Snapshot {
     me: string;
     users: string[];
     typing: string[];
+    statuses: Record<string, string>;
+    voice: string[];
     connected: boolean;
 }
 
@@ -18,7 +20,7 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
 
     private view: vscode.WebviewView | undefined;
     private log: MuggeEvent[] = [];
-    private snapshot: Snapshot = { me: '', users: [], typing: [], connected: false };
+    private snapshot: Snapshot = { me: '', users: [], typing: [], statuses: {}, voice: [], connected: false };
 
     constructor(
         private readonly extensionUri: vscode.Uri,
@@ -96,8 +98,23 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
                     me: String(event.me ?? ''),
                     users: asStrings(event.users),
                     typing: asStrings(event.typing),
+                    statuses: asStringMap(event.statuses),
+                    voice: asStrings(event.voice),
                     connected: event.connected === true,
                 };
+                break;
+            case 'status': {
+                const name = String(event.name ?? '');
+                const text = String(event.text ?? '');
+                if (text) {
+                    this.snapshot.statuses[name] = text;
+                } else {
+                    delete this.snapshot.statuses[name];
+                }
+                break;
+            }
+            case 'voice':
+                this.snapshot.voice = asStrings(event.users);
                 break;
             case 'me':
                 this.snapshot.me = String(event.name ?? '');
@@ -254,6 +271,16 @@ export class MuggeChatViewProvider implements vscode.WebviewViewProvider {
 
 function asStrings(value: unknown): string[] {
     return Array.isArray(value) ? value.map((v) => String(v)) : [];
+}
+
+function asStringMap(value: unknown): Record<string, string> {
+    const out: Record<string, string> = {};
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+        for (const [k, v] of Object.entries(value)) {
+            out[k] = String(v);
+        }
+    }
+    return out;
 }
 
 function nonceString(): string {
